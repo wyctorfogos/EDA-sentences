@@ -1,7 +1,7 @@
 # TSNE USAGE TO COMPARE THE IMPACT OF IMAGE DESCRIPTION ON SKIN LESION RECOGNITION
 ## An Analysis with the PAD-UFES-20 Dataset
 
-We've used the dataset PAD-UFES-20 to explore the impact of image description on the skin lesion recognition.
+We've used the dataset PAD-UFES-20 to explore the impact of image description on the skin lesion recognition. To transform the sentences into vectors we'd used BERT to get the embbedings values referents to thegenerated sentences.
 
 ---
 # Create enviroment:
