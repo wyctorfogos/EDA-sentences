@@ -59,13 +59,13 @@ def embed_sentences(sentences: List[str], tokenizer: BertTokenizer, model: BertM
     return np.vstack(embeddings)
 
 
-def find_optimal_k(embeddings: np.ndarray, max_k: int = 15) -> int:
+def find_optimal_k(embeddings: np.ndarray, min_k: int = 2, max_k: int = 15) -> int:
     """
     Encontra o número ótimo de clusters (k) usando o método da Silhueta.
     """
     print(f"\nBuscando k ótimo entre 2 e {max_k} usando Análise de Silhueta...")
     silhouette_scores = []
-    k_range = range(2, max_k + 1)
+    k_range = range(min_k, max_k + 1)
 
     for k in k_range:
         kmeans = KMeans(n_clusters=k, random_state=42, n_init="auto")
@@ -164,7 +164,7 @@ def main() -> None:
         print(f"Embeddings prontos: {embeddings.shape}")
 
         # 1. Encontra o k ótimo a partir dos dados
-        optimal_k = find_optimal_k(embeddings, max_k=15)
+        optimal_k = find_optimal_k(embeddings, min_k=2, max_k=8)
         
         # 2. Usa o k ótimo para avaliar e comparar
         title = os.path.splitext(csv_name)[0]
