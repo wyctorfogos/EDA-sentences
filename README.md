@@ -26,10 +26,21 @@ Add your csv file on the data folder and then run the script below:
     python3 src/scripts/tsne_of_sentences.py
 ```
 
-
 It'll generate an image which contain 1 plot about: llm, vlm, or llm and vlm together.
 ![Plot of the TSNE projections](./images/tsne_sentence_embeddings_metadata_with_sentences_new-prompt-deepseek-r1:70b.png)
 
+# Run KMeans analysis
+ 
+You can use the KMeans analysis to evaluate the sentences.
+
+When using the PAD-UFES-20 dataset, with the sentences text on the folder 'dataimages/umap_metadata_with_sentences_of_patient_description_and_image-description_llm-qwen2.5:72b_vllm-gemma3:27b.png', just run code:
+
+```bash
+    python3 src/scripts/evaluate_num_clusters.py
+```
+![Plot of the KMeans](./images/umap_metadata_with_sentences_of_patient_description_and_image-description_llm-qwen2.5:72b_vllm-gemma3:27b.png)
+
+*Obs.: If you want to do a binary analysis, just change the flag 'is_binary' from False to True.
 
 # Join Different Images for Comparison
 
