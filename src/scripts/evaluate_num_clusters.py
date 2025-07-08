@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from typing import List
-import numpy as np
 import os
+import numpy as np
+import pandas as pd
 import torch
 from sklearn.cluster import KMeans
 from sklearn.metrics import (
@@ -14,7 +15,6 @@ from sklearn.preprocessing import LabelEncoder
 from transformers import BertModel, BertTokenizer
 import umap.umap_ as umap
 import matplotlib.pyplot as plt
-
 from utils import load_dataset  # ajuste o import se seu utilitário tiver outro caminho
 import csv
 
@@ -32,11 +32,6 @@ def save_metrics(title, n_clusters, n_labels, ari, nmi, hom):
     with open(file_path, mode="a", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([title, n_clusters, n_labels, ari, nmi, hom])
-
-
-# -----------------------------------------------------------------------------
-# Helper functions
-# -----------------------------------------------------------------------------
 
 def embed_sentences(sentences: List[str], tokenizer: BertTokenizer, model: BertModel, device: str) -> np.ndarray:
     """Retorna um np.ndarray (N, hidden_size) com o embedding [CLS] de cada sentença."""
@@ -133,12 +128,27 @@ def evaluate_clustering(embeddings: np.ndarray, labels: List[str], title: str, o
 
     save_metrics(title, n_clusters, num_real_labels, ari, nmi, hom)
 
+def convert_labels(dataframe:dict):
+    '''
+    This function replace the multiple labels to the binary ones
+    '''
+    try:
+        df_replaced_labels = dataframe["diagnostic"].replace(
+            {
+                'MEL': 'CANCER',
+                'BCC':'CANCER',
+                'SCC':'CANCER',
+                'ACK':'NO-CANCER',
+                'SEK':'NO-CANCER',
+                'NEV':'NO-CANCER'
+             }
+        )
 
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
+        return df_replaced_labels
+    except Exception as e:
+        raise FileExistsError(f"Erro ao converter os multilabels para binário! Erro:{e}\n")
 
-def main() -> None:
+def main(is_binary:bool=True) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Usando dispositivo: {device}")
 
@@ -159,6 +169,11 @@ def main() -> None:
         sentences = df["sentence"].tolist()
         diagnostics = df["diagnostic"].tolist()
 
+        if is_binary:
+            # Converte os multilabels para binário
+            diagnostics = convert_labels(df) 
+            diagnostics = diagnostics.tolist()
+
         print(f"\nProcessando {csv_name} ({len(sentences)} frases)...")
         embeddings = embed_sentences(sentences, tokenizer, model, device)
         print(f"Embeddings prontos: {embeddings.shape}")
@@ -171,4 +186,5 @@ def main() -> None:
         evaluate_clustering(embeddings, diagnostics, title, optimal_k)
 
 if __name__ == "__main__":
-    main()
+    is_binary = True # Se for binário, usar 'True'
+    main(is_binary=is_binary)
