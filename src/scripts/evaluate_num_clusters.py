@@ -148,11 +148,10 @@ def convert_labels(dataframe:dict):
     except Exception as e:
         raise FileExistsError(f"Erro ao converter os multilabels para binário! Erro:{e}\n")
 
-def main(is_binary:bool=True) -> None:
+def main(is_binary:bool=True, data_dir:str='/data') -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Usando dispositivo: {device}")
 
-    data_dir = "/home/wytcor/PROJECTs/EDA-sentences/data/vlms-and-llms-sentences"
     csv_files = [f for f in os.listdir(data_dir) if f.endswith(".csv")]
 
     if not csv_files:
@@ -187,4 +186,5 @@ def main(is_binary:bool=True) -> None:
 
 if __name__ == "__main__":
     is_binary = True # Se for binário, usar 'True'
-    main(is_binary=is_binary)
+    data_dir = "/home/wytcor/PROJECTs/EDA-sentences/data/vlms-and-llms-sentences"
+    main(is_binary=is_binary, data_dir=data_dir)
