@@ -12,7 +12,8 @@ from sklearn.metrics import (
     silhouette_score,
 )
 from sklearn.preprocessing import LabelEncoder
-from transformers import BertModel, BertTokenizer
+# from transformers import BertModel, BertTokenizer
+from sentence_transformers import SentenceTransformer
 import umap.umap_ as umap
 import matplotlib.pyplot as plt
 from utils import load_dataset  # ajuste o import se seu utilitário tiver outro caminho
@@ -33,25 +34,25 @@ def save_metrics(title, n_clusters, n_labels, ari, nmi, hom):
         writer = csv.writer(f)
         writer.writerow([title, n_clusters, n_labels, ari, nmi, hom])
 
-def embed_sentences(sentences: List[str], tokenizer: BertTokenizer, model: BertModel, device: str) -> np.ndarray:
-    """Retorna um np.ndarray (N, hidden_size) com o embedding [CLS] de cada sentença."""
-    embeddings = []
+# def embed_sentences(sentences: List[str], tokenizer: BertTokenizer, model: BertModel, device: str) -> np.ndarray:
+#     """Retorna um np.ndarray (N, hidden_size) com o embedding [CLS] de cada sentença."""
+#     embeddings = []
 
-    for txt in sentences:
-        inputs = tokenizer(
-            txt,
-            return_tensors="pt",
-            truncation=True,
-            padding=True,
-            max_length=128,
-        ).to(device)
+#     for txt in sentences:
+#         inputs = tokenizer(
+#             txt,
+#             return_tensors="pt",
+#             truncation=True,
+#             padding=True,
+#             max_length=128,
+#         ).to(device)
 
-        with torch.no_grad():
-            outputs = model(**inputs)
-        cls_emb = outputs.last_hidden_state[:, 0, :].squeeze().cpu().numpy()
-        embeddings.append(cls_emb)
+#         with torch.no_grad():
+#             outputs = model(**inputs)
+#         cls_emb = outputs.last_hidden_state[:, 0, :].squeeze().cpu().numpy()
+#         embeddings.append(cls_emb)
 
-    return np.vstack(embeddings)
+#     return np.vstack(embeddings)
 
 
 def find_optimal_k(embeddings: np.ndarray, min_k: int = 2, max_k: int = 15) -> int:
@@ -113,13 +114,13 @@ def evaluate_clustering(embeddings: np.ndarray, labels: List[str], title: str, o
     reduced = reducer.fit_transform(embeddings)
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-    fig.suptitle(f"{title}\n(k_encontrado={n_clusters} vs k_real={num_real_labels})", fontsize=14)
+    fig.suptitle(f"{title}\n(k_found={n_clusters} vs k_real={num_real_labels})", fontsize=14)
 
-    axes[0].scatter(reduced[:, 0], reduced[:, 1], c=y_true, cmap="tab10", s=10)
-    axes[0].set_title("True Labels")
+    axes[0].scatter(reduced[:, 0], reduced[:, 1], c=y_pred, cmap="tab10", s=10)
+    axes[0].set_title("Cluster Assignments")
 
-    axes[1].scatter(reduced[:, 0], reduced[:, 1], c=y_pred, cmap="tab10", s=10)
-    axes[1].set_title("Cluster Assignments")
+    axes[1].scatter(reduced[:, 0], reduced[:, 1], c=y_true, cmap="tab10", s=10)
+    axes[1].set_title("True Labels")
 
     plt.tight_layout()
     plt.savefig(f"results/umap_{title}.png", dpi=400)
@@ -158,9 +159,9 @@ def main(is_binary:bool=True, data_dir:str='/data') -> None:
         print(f"Nenhum arquivo CSV encontrado em {data_dir}")
         return
 
-    tokenizer = BertTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
-    model = BertModel.from_pretrained("emilyalsentzer/Bio_ClinicalBERT").to(device).eval()
-
+    # tokenizer = BertTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
+    # model = BertModel.from_pretrained("emilyalsentzer/Bio_ClinicalBERT").to(device).eval()
+    model = SentenceTransformer("abhinand/MedEmbed-large-v0.1")
     for csv_name in csv_files:
         csv_path = os.path.join(data_dir, csv_name)
         df = load_dataset.load_data(file_folder_path=csv_path)
@@ -174,7 +175,8 @@ def main(is_binary:bool=True, data_dir:str='/data') -> None:
             diagnostics = diagnostics.tolist()
 
         print(f"\nProcessando {csv_name} ({len(sentences)} frases)...")
-        embeddings = embed_sentences(sentences, tokenizer, model, device)
+        # embeddings = embed_sentences(sentences, tokenizer, model, device)
+        embeddings = model.encode(sentences=sentences)
         print(f"Embeddings prontos: {embeddings.shape}")
 
         # 1. Encontra o k ótimo a partir dos dados
@@ -185,6 +187,6 @@ def main(is_binary:bool=True, data_dir:str='/data') -> None:
         evaluate_clustering(embeddings, diagnostics, title, optimal_k)
 
 if __name__ == "__main__":
-    is_binary = True # Se for binário, usar 'True'
-    data_dir = "/home/wytcor/PROJECTs/EDA-sentences/data/vlms-and-llms-sentences"
+    is_binary = False # Se for binário, usar 'True'
+    data_dir ="/home/wytcor/PROJECTs/mestrado-ufes/lab-life/EDA-sentences/data/ICs- Vitor e Ana/DATASETS - LLMs e VLMs/GENERATED_SEQUENCE_BY_LLMs/llmsentences/pad20" # sentences-of-patient-data-description"
     main(is_binary=is_binary, data_dir=data_dir)
